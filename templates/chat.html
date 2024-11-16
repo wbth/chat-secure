@@ -1,0 +1,51 @@
+<!-- templates/chat.html -->
+{% extends "base.html" %}
+{% block title %}Chat - Secure Chat{% endblock %}
+{% block content %}
+<div class="chat-container">
+    <h1>Secure Chat</h1>
+    
+    {% if users|length == 0 %}
+        <div class="no-users-message">
+            <p>No other users are available to chat with.</p>
+            <p>Please wait for others to register.</p>
+        </div>
+    {% else %}
+        <form method="POST">
+            {{ form.csrf_token }}
+            <div class="form-group">
+                <label for="recipient">Send to:</label>
+                <select name="recipient" id="recipient" required>
+                    {% for user in users %}
+                        <option value="{{ user.username }}">{{ user.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="message">Message:</label>
+                <textarea name="message" id="message" required rows="4" style="width: 100%; padding: 8px;"></textarea>
+            </div>
+            <button type="submit">Send</button>
+        </form>
+        
+        <div class="message-list">
+            {% for message in messages %}
+                <div class="message {% if message.sender == session.username %}sent{% else %}received{% endif %}">
+                    <strong>{{ message.sender }} to {{ message.recipient }}</strong>
+                    <p>{{ message.message }}</p>
+                    <small>{{ message.timestamp }}</small>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+    
+    <form action="{{ url_for('reset') }}" method="POST" onsubmit="return confirm('Are you sure you want to reset all data? This cannot be undone.');" style="display: inline;">
+        {{ form.csrf_token }}
+        <button type="submit" style="background-color: #dc3545;">Reset All Data</button>
+    </form>
+    
+    <div class="nav-links">
+        <a href="{{ url_for('logout') }}">Logout</a>
+    </div>
+</div>
+{% endblock %}

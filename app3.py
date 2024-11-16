@@ -63,38 +63,68 @@ def close_db(error):
         db.close()
 
 
+#def encrypt_with_aes(message, shared_secret):
+#    """Encrypt a message using AES-GCM"""
+#    try:
+#        key = b64decode(key)
+#        # Ensure that the shared secret is the correct length (e.g., 32 bytes for AES-256)
+#        nonce = get_random_bytes(16)
+#        cipher = AES.new(shared_secret, AES.MODE_GCM, nonce=nonce)
+#        ciphertext, tag = cipher.encrypt_and_digest(message.encode())
+#        encrypted_data = b64encode(nonce + tag + ciphertext).decode()
+#        return encrypted_data
+#    except Exception as e:
+#        logging.error(f"Encryption failed: {str(e)}")
+#        raise ValueError(f"Encryption failed: {str(e)}")
+#
+#
+#        
+#def decrypt_with_aes(data, key):
+#    """Decrypt data using AES-GCM"""
+#    try:
+#        data = b64decode(data)
+#        key = b64decode(key)
+#        nonce, tag, ciphertext = data[:16], data[16:32], data[32:]
+#        cipher = AES.new(key, AES.MODE_GCM, nonce=nonce)
+#        decrypted = cipher.decrypt_and_verify(ciphertext, tag)
+#        return decrypted.decode()
+#    except Exception as e:
+#        logging.error(f"Decryption failed: {str(e)}")
+#        raise ValueError(f"Decryption failed: {str(e)}")
+
 def encrypt_with_aes(message, shared_secret):
     """Encrypt a message using AES-GCM"""
     try:
-        #key = b64decode(key)
         # Ensure that the shared secret is the correct length (e.g., 32 bytes for AES-256)
         shared_secret = shared_secret[:32]  # Truncate to 256-bit length if needed
-        nonce = get_random_bytes(16)
+        shared_secret = b64decode(shared_secret)  # Decode shared secret if it's base64-encoded
+
+        nonce = get_random_bytes(16)  # Generate a nonce
         cipher = AES.new(shared_secret, AES.MODE_GCM, nonce=nonce)
-        ciphertext, tag = cipher.encrypt_and_digest(message.encode())
-        encrypted_data = b64encode(nonce + tag + ciphertext).decode()
+        ciphertext, tag = cipher.encrypt_and_digest(message.encode())  # Ensure message is bytes
+        encrypted_data = b64encode(nonce + tag + ciphertext).decode()  # Combine and encode the result
         return encrypted_data
     except Exception as e:
         logging.error(f"Encryption failed: {str(e)}")
         raise ValueError(f"Encryption failed: {str(e)}")
 
 
-        
-def decrypt_with_aes(data, key):
+def decrypt_with_aes(data, shared_secret):
     """Decrypt data using AES-GCM"""
     try:
+        # Ensure that the shared secret is the correct length (e.g., 32 bytes for AES-256)
         shared_secret = shared_secret[:32]  # Truncate to 256-bit length if needed
-        data = b64decode(data)
-        #key = b64decode(key)
-        nonce, tag, ciphertext = data[:16], data[16:32], data[32:]
+        shared_secret = b64decode(shared_secret)  # Decode shared secret if it's base64-encoded
+
+        data = b64decode(data)  # Decode the encrypted data
+        nonce, tag, ciphertext = data[:16], data[16:32], data[32:]  # Extract nonce, tag, and ciphertext
+
         cipher = AES.new(shared_secret, AES.MODE_GCM, nonce=nonce)
-        #cipher = AES.new(key, AES.MODE_GCM, nonce=nonce)
-        decrypted = cipher.decrypt_and_verify(ciphertext, tag)
-        return decrypted.decode()
+        decrypted = cipher.decrypt_and_verify(ciphertext, tag)  # Decrypt and verify
+        return decrypted.decode()  # Return the decrypted message as string
     except Exception as e:
         logging.error(f"Decryption failed: {str(e)}")
         raise ValueError(f"Decryption failed: {str(e)}")
-
 
 # X3DH Key Exchange Function
 def perform_x3dh_exchange(private_key_str, recipient_public_key_str):
@@ -105,8 +135,7 @@ def perform_x3dh_exchange(private_key_str, recipient_public_key_str):
     recipient_public_key = x25519.X25519PublicKey.from_public_bytes(recipient_public_key_bytes)
     
     shared_secret = private_key.exchange(recipient_public_key)
-    return shared_secret[:32]  # Truncate or process the shared secret to a fixed length
-#    return shared_secret
+    return shared_secret
 
 # Double Ratchet Key Derivation
 def derive_ratchet_key(shared_secret, counter):
